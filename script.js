@@ -61,7 +61,7 @@ class game {
     }
     this.startingTiles = this.cleared
     this.tiles = (Width * Height);
-    this.SafeTiles = (Width * Height) - this.bombs.length
+    this.tilesLeft = this.tiles
   }
 
   endGame() {
@@ -71,7 +71,7 @@ class game {
   }
   
   checkWin() {
-    if (this.cleared != this.SafeTiles) {
+    if (this.tilesLeft != this.bombs.length) {
       return false
     }
     canvas.removeEventListener("mousedown", canvasClicked)
