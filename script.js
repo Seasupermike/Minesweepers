@@ -61,6 +61,7 @@ class game {
     }
     this.startingTiles = this.cleared
     this.tiles = (Width * Height);
+    this.SafeTiles = (Width * Height) - this.bombs.length
   }
 
   endGame() {
@@ -70,11 +71,12 @@ class game {
   }
   
   checkWin() {
-    if (Math.floor(((this.cleared - this.startingTiles)/ (this.tiles - this.startingTiles)) * 100) != 100) {
-      return
+    if (this.cleared != this.SafeTiles) {
+      return false
     }
     canvas.removeEventListener("mousedown", canvasClicked)
     document.querySelector("#flags").textContent = `You won! Increase the number of tiles for an extra challenge`
+    return true
   }
     
   win() {
@@ -106,7 +108,7 @@ class tile {
   }
 
   destroy() {
-    if (this.flagged || this.cleared || this.x == 0 || this.y == 0) {
+    if (this.flagged || this.cleared || this.x == 0 || this.y == 0 || this.x == this.game.width + 1 || this.y == this.game.height + 1) {
       return;
     }
     this.cleared = true;
@@ -168,7 +170,7 @@ function getRandom(Min, Max, IsInt) {
   return Temp;
 }
 
-let currentGame = new game(19, 20);
+let currentGame = new game(20, 20);
 
 document.querySelector("form").addEventListener("submit", function () {
   event.preventDefault();
