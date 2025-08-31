@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/addons/p5.sound.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <main>
+      <form>
+          <input type="number" id="width" required size="10" placeholder="width"/>
+          <input type="number" id="height" required size="10" placeholder="height"/>
+          <button>new game</button>
+      </form>
+      <hr />
+      <p id="flags"></p>
+      <canvas width="0" height="0" oncontextmenu="return false;"></canvas>
+    </main>
+    <script defer src="sketch.js"></script>
+  </body>
+</html>
