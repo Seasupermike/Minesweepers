@@ -17,7 +17,7 @@ class game {
       this.board[x] = [];
 
       for (let y = 0; y < Height + 1; y++) {
-        this.board[x][y] = new tile(x, y, this);
+        this.board[x][y] = (x == 0 || y == 0) ? new fakeTile(x, y, this) : new tile(x, y, this);
       }
     }
 
@@ -156,6 +156,26 @@ class tile {
     }
 
     document.querySelector("#flags").textContent = `${this.game.flags} flags`;
+  }
+}
+
+class fakeTile {
+  constructor(x, y, game) {
+    this.nearby = 0;
+    this.flagged = false;
+    this.cleared = false;
+    this.x = x;
+    this.y = y;
+    this.shade = undefined;
+    this.game = game;
+  }
+
+  destroy() {
+    
+  }
+
+  flag() {
+  
   }
 }
 
