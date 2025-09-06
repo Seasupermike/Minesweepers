@@ -1,49 +1,35 @@
 const canvas = document.querySelector("canvas");
 const content = canvas.getContext("2d");
-let tileSize = 20;
+const message = document.querySelector("p");
+const tileSize = 20;
+
 class game {
   constructor(Width, Height) {
     content.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = Width * tileSize;
     canvas.height = Height * tileSize;
-    this.width = Width
-    this.height = Height 
+    this.width = Width;
+    this.height = Height;
+    this.tiles = Number(Width) * Number(Height);
     canvas.addEventListener("mousedown", canvasClicked);
     this.board = [];
     this.bombs = [];
     this.cleared = 0;
 
-    for (let x = 0; x < Width + 1; x++) {
+    for (let x = 0, i = 0; x <= Width; x++) {
       this.board[x] = [];
-
-      for (let y = 0; y < Height + 1; y++) {
-        this.board[x][y] = (x == 0 || y == 0) ? new fakeTile(x, y, this) : new tile(x, y, this);
-      }
-    }
-
-    for (let x = 1; x < Width; x++) {
-      for (let y = 1; y < Height; y++) {
-        let tile = this.board[x][y];
-
-        if (getRandom(0, Width * Height) < Width * Height * 0.2) {
-          tile.isBomb = true;
-          this.bombs.push(tile);
-          for (let xo = -1; xo < 2; xo++) {
-            for (let yo = -1; yo < 2; yo++) {
-              this.board[x + xo][y + yo].nearby++;
-            }
-          }
+      
+      for (let y = 0; y <= Height; y++, i++) {
+        this.board[x][y] = new tile(x, y, this);
+        this.board[x][y].isBomb = (x != 0 && y != 0 && getRandom(0, Width * Height) < Width * Height * 0.2);
+        if (this.board[x][y].isBomb) {
+          this.bombs.push(this.board[x][y]);
+          this.tiles--;
         }
-      }
-    }
-    
-    this.flags = this.bombs.length;
-    document.querySelector("#flags").textContent = `${this.flags} flags`;
-    for (let x = 0, i = 0; x < (Width + 1) * tileSize; x += tileSize) {
-      for (let y = 0; y < (Height + 1) * tileSize; y += tileSize, i++) {
-        content.fillStyle = i % 2 == 0 ? "green" : "limegreen";
-        this.board[x / tileSize][y / tileSize].shade = content.fillStyle;
-        content.fillRect(x, y, 40, 40);
+
+        content.fillStyle = (i % 2 == 0) ? "green" : "limegreen";
+        this.board[x][y].shade = content.fillStyle;
+        content.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
       }
 
       if (Height % 2 != 0) {
@@ -51,48 +37,73 @@ class game {
       }
     }
 
-    outerloop: for (let x = 1; x < Width; x++) {
-      for (let y = 1; y < Height; y++) {
-        if (this.board[x][y].nearby === 0) {
-          this.board[x][y].destroy();
-          break outerloop;
+    for (let i = 0; i < this.bombs.length; i++) {
+      let bomb = this.bombs[i];
+      let x = bomb.x;
+      let y = bomb.y;
+
+      for (let xo = -1; xo < 2; xo++) {
+        for (let yo = -1; yo < 2; yo++) {
+          try {
+            this.board[x + xo][y + yo].nearby++;
+          } catch {}
         }
       }
     }
-    this.startingTiles = this.cleared
-    this.tiles = (Width * Height);
-    this.tilesLeft = this.tiles
+
+    this.flags = this.bombs.length;
+    message.textContent = `${this.flags} flags`;
+
+    outerloop1: for (let x = 1; x < Width; x++) {
+      for (let y = 1; y < Height; y++) {
+        if (this.board[x][y].nearby == 0) {
+          this.board[x][y].destroy();
+          break outerloop1;
+        }
+      }
+
+      if (x + 1 == Width) {
+        outerloop2: for (let x2 = 1; x2 < Width; x2++) {
+          for (let y2 = 1; y2 < Height; y2++) {
+            if (this.board[x2][y2].isBomb == false) {
+              this.board[x2][y2].destroy();
+              break outerloop2;
+            }
+          }
+        }
+      }
+    }
   }
 
-  endGame() {
-    console.log("gameEnded");
-    canvas.removeEventListener("mousedown", canvasClicked)
-    document.querySelector("#flags").textContent = `You lost! You cleared ${Math.floor(((this.cleared - this.startingTiles)/ (this.tiles - this.startingTiles)) * 100)}% of the board!`
+  endGame(x, y) {
+    canvas.removeEventListener("mousedown", canvasClicked);
+    message.textContent = `You lost! You cleared ${Math.floor(((this.cleared - this.startingTiles) / (this.tiles - this.startingTiles)) * 100)}% of the board!`;
   }
-  
+
   checkWin() {
-    if (this.tilesLeft != this.bombs.length) {
-      return false
+    if (this.cleared != this.tiles) {
+      return false;
     }
-    canvas.removeEventListener("mousedown", canvasClicked)
-    document.querySelector("#flags").textContent = `You won! Increase the number of tiles for an extra challenge`
-    return true
+    canvas.removeEventListener("mousedown", canvasClicked);
+    message.textContent = `You won! Increase the number of tiles for an extra challenge`;
+    return true;
   }
-    
+
   win() {
     for (let x = 1; x <= this.width; x++) {
       for (let y = 1; y <= this.height; y++) {
-        let tile = this.board[x][y]
+        let tile = this.board[x][y];
         if (tile.isBomb) {
-          tile.flag()
+          tile.flag();
         } else {
-          tile.destroy()
+          tile.destroy();
         }
-        
       }
     }
-    
-    document.querySelector("#flags").textContent = `You cheated! Congrats on acomplising nothing.`
+
+    document.querySelector(
+      "p"
+    ).textContent = `You cheated! Congrats on acomplising nothing.`;
   }
 }
 
@@ -103,23 +114,23 @@ class tile {
     this.cleared = false;
     this.x = x;
     this.y = y;
-    this.shade = undefined;
+    this.shade = null;
     this.game = game;
   }
 
   destroy() {
-    if (this.flagged || this.cleared || this.x == 0 || this.y == 0 || this.x == this.game.width + 1 || this.y == this.game.height + 1) {
+    if (this.flagged || this.cleared || this.x == 0 || this.y == 0 || this.x == this.game.width || this.y == this.game.height) {
       return;
     }
     this.cleared = true;
     if (this.isBomb) {
-      this.game.endGame();
+      this.game.endGame(this.x, this.y);
       return;
     }
     content.fillStyle = this.shade == "#008000" ? "#EECFB1" : "beige";
     content.fillRect((this.x - 1) * tileSize, (this.y - 1) * tileSize, tileSize, tileSize);
-    this.game.cleared++
-    this.game.checkWin()
+    this.game.cleared++;
+    this.game.checkWin();
     if (this.nearby !== 0) {
       content.fillStyle = "black";
       content.fillText(this.nearby, (this.x - 1) * tileSize + tileSize * 0.35, (this.y - 1) * tileSize + tileSize * 0.7);
@@ -128,12 +139,7 @@ class tile {
 
     for (let xo = -1; xo < 2; xo++) {
       for (let yo = -1; yo < 2; yo++) {
-        if (xo == 0 && yo == 0) {
-          continue
-        }
-        try {
-          this.game.board[this.x + xo][this.y + yo].destroy();
-        } catch {}
+        this.game.board[this.x + xo][this.y + yo].destroy();
       }
     }
   }
@@ -155,27 +161,7 @@ class tile {
       content.fillRect((this.x - 1) * tileSize + tileSize / 5, (this.y - 1) * tileSize + tileSize / 5, tileSize * 0.6, tileSize * 0.6);
     }
 
-    document.querySelector("#flags").textContent = `${this.game.flags} flags`;
-  }
-}
-
-class fakeTile {
-  constructor(x, y, game) {
-    this.nearby = 0;
-    this.flagged = false;
-    this.cleared = false;
-    this.x = x;
-    this.y = y;
-    this.shade = undefined;
-    this.game = game;
-  }
-
-  destroy() {
-    
-  }
-
-  flag() {
-  
+    message.textContent = `${this.game.flags} flags`;
   }
 }
 
@@ -194,10 +180,7 @@ let currentGame = new game(20, 20);
 
 document.querySelector("form").addEventListener("submit", function () {
   event.preventDefault();
-  currentGame = new game(
-    document.querySelector("#width").value,
-    document.querySelector("#height").value
-  );
+  currentGame = new game(document.querySelector("#width").value, document.querySelector("#height").value);
 });
 
 function canvasClicked() {
