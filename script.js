@@ -74,7 +74,7 @@ class game {
       }
     }
     this.tiles -= this.cleared
-    this.cleared = 1
+    this.cleared = 0
   }
 
   endGame(x, y) {
