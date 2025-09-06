@@ -73,11 +73,13 @@ class game {
         }
       }
     }
+    this.tiles -= this.cleared
+    this.cleared = 1
   }
 
   endGame(x, y) {
     canvas.removeEventListener("mousedown", canvasClicked);
-    message.textContent = `You lost! You cleared ${Math.floor(((this.cleared - this.startingTiles) / (this.tiles - this.startingTiles)) * 100)}% of the board!`;
+    message.textContent = `You lost! You cleared ${Math.round((this.cleared / this.tiles) * 100)}% of the board!`;
   }
 
   checkWin() {
@@ -139,7 +141,9 @@ class tile {
 
     for (let xo = -1; xo < 2; xo++) {
       for (let yo = -1; yo < 2; yo++) {
-        this.game.board[this.x + xo][this.y + yo].destroy();
+        try {
+          this.game.board[this.x + xo][this.y + yo].destroy();
+        } catch {}
       }
     }
   }
