@@ -119,7 +119,7 @@ class tile {
   }
 
   destroy() {
-    if (this.flagged || this.cleared || this.x == 0 || this.y == 0 || this.x == this.game.width || this.y == this.game.height) {
+    if (this.flagged || this.cleared || this.x == 0 || this.y == 0) {
       return;
     }
     this.cleared = true;
