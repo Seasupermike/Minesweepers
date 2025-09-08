@@ -2,9 +2,10 @@ const canvas = document.querySelector("canvas");
 const content = canvas.getContext("2d");
 const message = document.querySelector("p");
 const tileSize = 20;
-
 class game {
   constructor(Width, Height) {
+    this.abortController = new AbortController();
+    this.signal = this.abortController.signal;
     content.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = Width * tileSize;
     canvas.height = Height * tileSize;
@@ -61,7 +62,7 @@ class game {
           break outerloop1;
         }
       }
-
+      
       if (x + 1 == Width) {
         outerloop2: for (let x2 = 1; x2 < Width; x2++) {
           for (let y2 = 1; y2 < Height; y2++) {
@@ -77,9 +78,27 @@ class game {
     this.cleared = 0
   }
 
-  endGame(x, y) {
+  async endGame() {
     canvas.removeEventListener("mousedown", canvasClicked);
     message.textContent = `You lost! You cleared ${Math.round((this.cleared / this.tiles) * 100)}% of the board!`;
+    document.body.style.backgroundColor = 'red';
+    let bombs = shuffleArray(this.bombs.flat(Infinity));
+    for (let i = 0; i < bombs.length; i++) {
+      if (this.signal.aborted) {
+        return;
+      }
+      
+      await delay(150);
+      bombs[i].detonate();
+    }
+    this.abortController = null;
+    
+  }
+  
+  cancelGame() {
+    if (this.abortController) {
+      this.abortController.abort("Game reset");
+    }
   }
 
   checkWin() {
@@ -88,13 +107,23 @@ class game {
     }
     canvas.removeEventListener("mousedown", canvasClicked);
     message.textContent = `You won! Increase the number of tiles for an extra challenge`;
+    document.body.style.backgroundColor = 'green';
     return true;
   }
 
-  win() {
+  async win() {
+    let board = []
+    for (let x = 0; x < this.width; x++) {
+      board[x] = shuffleArray(this.board[x])
+    }
+    board = shuffleArray(board)
     for (let x = 1; x <= this.width; x++) {
       for (let y = 1; y <= this.height; y++) {
-        let tile = this.board[x][y];
+        await delay(150)
+        if (this.signal.aborted) {
+          return;
+        }
+        let tile = board[x][y];
         if (tile.isBomb) {
           tile.flag();
         } else {
@@ -126,7 +155,8 @@ class tile {
     }
     this.cleared = true;
     if (this.isBomb) {
-      this.game.endGame(this.x, this.y);
+      this.game.endGame();
+      this.detonate()
       return;
     }
     content.fillStyle = this.shade == "#008000" ? "#EECFB1" : "beige";
@@ -167,6 +197,11 @@ class tile {
 
     message.textContent = `${this.game.flags} flags`;
   }
+  
+  detonate() {
+    content.fillStyle = (this.cleared) ? "orange" : "black"
+    content.fillRect((this.x - 1) * tileSize, (this.y - 1) * tileSize, tileSize, tileSize);
+  }
 }
 
 function getRandom(Min, Max, IsInt) {
@@ -182,8 +217,11 @@ function getRandom(Min, Max, IsInt) {
 
 let currentGame = new game(20, 20);
 
-document.querySelector("form").addEventListener("submit", function () {
+document.querySelector("form").addEventListener("submit", async function () {
   event.preventDefault();
+  document.body.style.backgroundColor = 'white';
+  currentGame.cancelGame();
+  await delay(250)
   currentGame = new game(document.querySelector("#width").value, document.querySelector("#height").value);
 });
 
@@ -199,5 +237,23 @@ function canvasClicked() {
       break;
     case 2:
       tile.flag();
+      break;
   }
+}
+
+
+async function delay(time) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time)
+  })
+}
+
+
+function shuffleArray(array) {
+  const newArray = [...array]; 
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
 }
