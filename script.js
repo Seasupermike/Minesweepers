@@ -15,6 +15,7 @@ class game {
     canvas.addEventListener("mousedown", canvasClicked);
     this.board = [];
     this.bombs = [];
+    this.safe = []
     this.cleared = 0;
 
     for (let x = 0, i = 0; x <= Width; x++) {
@@ -22,10 +23,16 @@ class game {
       
       for (let y = 0; y <= Height; y++, i++) {
         this.board[x][y] = new tile(x, y, this);
-        this.board[x][y].isBomb = (x != 0 && y != 0 && getRandom(0, Width * Height) < Width * Height * 0.2);
+        if (x == 1 || y == 1 || x == Width || y == Height) {
+          this.board[x][y].isBomb = (getRandom(0,100) < 5)
+        } else if (x != 0 && y != 0) {
+          this.board[x][y].isBomb = (getRandom(0,100) < 20)
+        }
         if (this.board[x][y].isBomb) {
           this.bombs.push(this.board[x][y]);
           this.tiles--;
+        } else {
+          this.safe.push(this.board[x][y])
         }
 
         content.fillStyle = (i % 2 == 0) ? "green" : "limegreen";
@@ -55,23 +62,14 @@ class game {
     this.flags = this.bombs.length;
     message.textContent = `${this.flags} flags`;
 
-    outerloop1: for (let x = 1; x < Width; x++) {
-      for (let y = 1; y < Height; y++) {
-        if (this.board[x][y].nearby == 0) {
-          this.board[x][y].destroy();
-          break outerloop1;
-        }
+    this.safe = shuffleArray(this.safe)
+    for (let i = 0; i < this.safe.length; i++) {
+      if (this.safe[i].nearby == 0) {
+        this.safe[i].destroy()
+        break
       }
-      
-      if (x + 1 == Width) {
-        outerloop2: for (let x2 = 1; x2 < Width; x2++) {
-          for (let y2 = 1; y2 < Height; y2++) {
-            if (this.board[x2][y2].isBomb == false) {
-              this.board[x2][y2].destroy();
-              break outerloop2;
-            }
-          }
-        }
+      if (i + 1 == this.safe.length) {
+        this.safe[getRandom(0, this.safe.length - 1, true)].destroy()
       }
     }
     this.tiles -= this.cleared
@@ -107,7 +105,7 @@ class game {
     }
     canvas.removeEventListener("mousedown", canvasClicked);
     message.textContent = `You won! Increase the number of tiles for an extra challenge`;
-    document.body.style.backgroundColor = 'green';
+    document.body.style.backgroundColor = "rgb(3,255,100)";
     return true;
   }
 
