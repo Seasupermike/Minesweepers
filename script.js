@@ -24,14 +24,14 @@ class game {
       for (let y = 0; y <= Height; y++, i++) {
         this.board[x][y] = new tile(x, y, this);
         if (x == 1 || y == 1 || x == Width || y == Height) {
-          this.board[x][y].isBomb = (getRandom(0,100) < 5)
+          this.board[x][y].isBomb = (getRandom(0,100) < 7)
         } else if (x != 0 && y != 0) {
-          this.board[x][y].isBomb = (getRandom(0,100) < 20)
+          this.board[x][y].isBomb = (getRandom(0,100) < 17)
         }
         if (this.board[x][y].isBomb) {
           this.bombs.push(this.board[x][y]);
           this.tiles--;
-        } else {
+        } else if (x != 0 && y != 0) {
           this.safe.push(this.board[x][y])
         }
 
@@ -68,8 +68,8 @@ class game {
         this.safe[i].destroy()
         break
       }
-      if (i + 1 == this.safe.length) {
-        this.safe[getRandom(0, this.safe.length - 1, true)].destroy()
+      if ((i + 1) == this.safe.length) {
+        this.safe[0].destroy()
       }
     }
     this.tiles -= this.cleared
@@ -130,9 +130,7 @@ class game {
       }
     }
 
-    document.querySelector(
-      "p"
-    ).textContent = `You cheated! Congrats on acomplising nothing.`;
+    document.querySelector("p").textContent = `You cheated! Congrats on acomplising nothing.`;
   }
 }
 
@@ -239,13 +237,11 @@ function canvasClicked() {
   }
 }
 
-
 async function delay(time) {
   return new Promise((resolve) => {
     setTimeout(resolve, time)
   })
 }
-
 
 function shuffleArray(array) {
   const newArray = [...array]; 
